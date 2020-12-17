@@ -17,7 +17,7 @@ namespace WebRaid.Node.Lokal
         /// <summary>
         /// Erstellt einen lokalen Speicherknoten
         /// </summary>
-        /// <param name="pfad">Pfad im lokalen Dateisystem</param>
+        /// <param name="pfad">Konfiguration mit "Pfad" im lokalen Dateisystem und "Name" für den Knoten</param>
         /// <param name="logger">Logger, um dem Speicherknoten auf die Finger schauen zu können ;-)</param>
         public Node(IConfiguration pfad, ILogger<Node> logger)
         {
