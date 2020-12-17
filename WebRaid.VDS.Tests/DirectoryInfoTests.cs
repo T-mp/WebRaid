@@ -1,11 +1,9 @@
 using System.IO;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using NUnit.Framework;
 using Test.Extensions.Logging;
 using NSubstitute;
 using FluentAssertions;
-using WebRaid.Node.Memory;
 using Microsoft.Extensions.Configuration;
 using WebRaid.Abstraction.Speicher;
 using WebRaid.VDS.JsonConverter;
@@ -39,7 +37,7 @@ namespace WebRaid.VDS.Tests
             var configuration = Substitute.For<IConfiguration>();
             configuration["Name"].Returns("TestMemoryNode1");
 
-            var node = new MemoryNode(configuration, Lf.Logger<MemoryNode>(LogLevel.Warning));
+            var node = new Node.Memory.Node(configuration, Lf.Logger<Node.Memory.Node>(LogLevel.Warning));
             var adressenGenerator = Substitute.For<IFileAdressenGenerator>();
             adressenGenerator.GetNew().Returns("Test/Dir1");
 
@@ -57,7 +55,7 @@ namespace WebRaid.VDS.Tests
             var configuration = Substitute.For<IConfiguration>();
             configuration["Name"].Returns("TestMemoryNode1");
 
-            var node = new MemoryNode(configuration, Lf.Logger<MemoryNode>(LogLevel.Warning));
+            var node = new Node.Memory.Node(configuration, Lf.Logger<Node.Memory.Node>(LogLevel.Warning));
             var adressenGenerator = Substitute.For<IFileAdressenGenerator>();
             adressenGenerator.GetNew().Returns("Test/Dir1");
 
@@ -76,10 +74,10 @@ namespace WebRaid.VDS.Tests
             var configuration = Substitute.For<IConfiguration>();
             configuration["Name"].Returns("TestMemoryNode1");
 
-            var node = new MemoryNode(configuration, Lf.Logger<MemoryNode>(LogLevel.Warning));
+            var node = new Node.Memory.Node(configuration, Lf.Logger<Node.Memory.Node>(LogLevel.Warning));
             var adressenGenerator = Substitute.For<IFileAdressenGenerator>();
             var adressNr = 1;
-            adressenGenerator.GetNew().Returns($"Test/Dir{adressNr++}",$"Test/Dir{adressNr++}",$"Test/Dir{adressNr++}");
+            adressenGenerator.GetNew().Returns($"Test/Dir{adressNr++}",$"Test/Dir{adressNr++}",$"Test/Dir{adressNr}");
 
             var root = DirectoryInfo.GetRoot(node, "/Test", adressenGenerator, Lf.Logger<DirectoryInfo>());
 
@@ -96,7 +94,7 @@ namespace WebRaid.VDS.Tests
             var configuration = Substitute.For<IConfiguration>();
             configuration["Name"].Returns("TestMemoryNode1");
 
-            var node = new MemoryNode(configuration, Lf.Logger<MemoryNode>(LogLevel.Warning));
+            var node = new Node.Memory.Node(configuration, Lf.Logger<Node.Memory.Node>(LogLevel.Warning));
             var adressenGenerator = Substitute.For<IFileAdressenGenerator>();
             adressenGenerator.GetNew().Returns("Test/Dir1","Test/Dir2");
 

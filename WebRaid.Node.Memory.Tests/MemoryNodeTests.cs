@@ -19,7 +19,7 @@ namespace WebRaid.Node.Memory.Tests
             var configuration = Substitute.For<IConfiguration>();
             configuration["Name"].Returns("Test1");
 
-            var unterTest = new MemoryNode(configuration, Lf.Logger<MemoryNode>());
+            var unterTest = new Node(configuration, Lf.Logger<Node>());
 
             var stream = await unterTest.Get("GibtEsNicht");
 
@@ -31,7 +31,7 @@ namespace WebRaid.Node.Memory.Tests
             var configuration = Substitute.For<IConfiguration>();
             configuration["Name"].Returns("Test1");
 
-            var unterTest = new MemoryNode(configuration, Lf.Logger<MemoryNode>());
+            var unterTest = new Node(configuration, Lf.Logger<Node>());
 
             unterTest.Speicher.Add("GibtEs", GenerateStreamFromString("TestDaten"));
 
@@ -51,7 +51,7 @@ namespace WebRaid.Node.Memory.Tests
             var configuration = Substitute.For<IConfiguration>();
             configuration["Name"].Returns("Test1");
 
-            var unterTest = new MemoryNode(configuration, Lf.Logger<MemoryNode>());
+            var unterTest = new Node(configuration, Lf.Logger<Node>());
 
             var resultat = await unterTest.Write("GibtEsNochNicht", GenerateStreamFromString("TestDaten;"));
 
@@ -69,7 +69,7 @@ namespace WebRaid.Node.Memory.Tests
             var configuration = Substitute.For<IConfiguration>();
             configuration["Name"].Returns("Test1");
 
-            var unterTest = new MemoryNode(configuration, Lf.Logger<MemoryNode>());
+            var unterTest = new Node(configuration, Lf.Logger<Node>());
 
             unterTest.Name.Should().Be("Test1");
 
