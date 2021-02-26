@@ -60,10 +60,24 @@ namespace WebRaid.VDS
         }
 
 
+        /// <summary>
+        /// Holt das RootDirectory
+        /// </summary>
+        /// <param name="persistenz">Zugrundeliegende Persistenzschicht</param>
+        /// <param name="name"></param>
+        /// <param name="adressenGenerator">Generator für eindeutige Adressen</param>
+        /// <param name="logger"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
         public static DirectoryInfo GetRoot(INode persistenz, string name, IFileAdressenGenerator adressenGenerator, ILogger<DirectoryInfo> logger)
         {
             logger.LogTrace($"GetRoot({name})");
+            if (persistenz == null) throw new ArgumentNullException(nameof(persistenz));
             if (string.IsNullOrWhiteSpace(name)) throw new ArgumentNullException(nameof(name));
+            if (adressenGenerator == null) throw new ArgumentNullException(nameof(adressenGenerator));
+            if (logger == null) throw new ArgumentNullException(nameof(logger));
+
             if (!name.StartsWith(Pfad.DirectorySeparatorString)) throw new ArgumentOutOfRangeException(nameof(name), "Der Pfad muss bis zum Root gehen!");
 
             return new DirectoryInfo(persistenz, adressenGenerator, $"{name}", logger);

@@ -6,7 +6,7 @@ using WebRaid.Abstraction.VDS;
 
 namespace WebRaid.VDS.JsonConverter
 {
-    public class JsonConverterFileSystemInfo : JsonConverter<FileSystemInfo>
+    internal class JsonConverterFileSystemInfo : JsonConverter<FileSystemInfo>
     {
         private static System.Text.Json.Serialization.JsonConverter instance;
         internal static ILogger<JsonConverterFileSystemInfo> Logger = null;

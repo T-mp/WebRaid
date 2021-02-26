@@ -49,23 +49,28 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebRaid.Abstraction.Tests",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test.Extensions.Logging", "Test.Extensions.Logging\Test.Extensions.Logging.csproj", "{5C589D14-E429-4C3B-81E5-9FCC13D2E852}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebRaid.Node.Raid", "WebRaid.Node.Raid\WebRaid.Node.Raid.csproj", "{2373DDA2-D133-403E-B87F-51A1B934DFB2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebRaid.Node.Raid", "WebRaid.Node.Raid\WebRaid.Node.Raid.csproj", "{2373DDA2-D133-403E-B87F-51A1B934DFB2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebRaid.Node.Raid.Tests", "WebRaid.Node.Raid.Tests\WebRaid.Node.Raid.Tests.csproj", "{06032275-CA36-4AE4-9FF2-6905C7F04112}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebRaid.Node.Raid.Tests", "WebRaid.Node.Raid.Tests\WebRaid.Node.Raid.Tests.csproj", "{06032275-CA36-4AE4-9FF2-6905C7F04112}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebRaid.VDS", "WebRaid.VDS\WebRaid.VDS.csproj", "{BB3F6A78-5844-4E80-8AEA-BD535C588A1E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebRaid.VDS.Tests", "WebRaid.VDS.Tests\WebRaid.VDS.Tests.csproj", "{9D292AE8-2D36-4C4C-9C7B-F7BA0DD59E5C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebRaid.Node.GoogleDrive.Tests", "WebRaid.Node.GoogleDrive.Tests\WebRaid.Node.GoogleDrive.Tests.csproj", "{2A00DC2B-6907-4A6A-A637-D11056BAFF19}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebRaid.Node.GoogleDrive.Tests", "WebRaid.Node.GoogleDrive.Tests\WebRaid.Node.GoogleDrive.Tests.csproj", "{2A00DC2B-6907-4A6A-A637-D11056BAFF19}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebRaid.Node.OneDrive.Tests", "WebRaid.Node.OneDrive.Tests\WebRaid.Node.OneDrive.Tests.csproj", "{F778BAA9-FD8C-46AD-8D17-5714BFB216FA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebRaid.Node.OneDrive.Tests", "WebRaid.Node.OneDrive.Tests\WebRaid.Node.OneDrive.Tests.csproj", "{F778BAA9-FD8C-46AD-8D17-5714BFB216FA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebRaid.Node.WebDe.Tests", "WebRaid.Node.WebDe.Tests\WebRaid.Node.WebDe.Tests.csproj", "{25B7875D-61F8-44B9-94DF-EC446941B1F4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebRaid.Node.WebDe.Tests", "WebRaid.Node.WebDe.Tests\WebRaid.Node.WebDe.Tests.csproj", "{25B7875D-61F8-44B9-94DF-EC446941B1F4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebRaid.Node.WebDav", "WebRaid.Node.WebDav\WebRaid.Node.WebDav.csproj", "{0575A58A-3BFD-4770-A2AD-EA1DB7D06B63}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebRaid.Node.WebDav", "WebRaid.Node.WebDav\WebRaid.Node.WebDav.csproj", "{0575A58A-3BFD-4770-A2AD-EA1DB7D06B63}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebRaid.Node.WebDav.Tests", "WebRaid.Node.WebDav.Tests\WebRaid.Node.WebDav.Tests.csproj", "{F4237DD2-BC59-466F-AD7C-471D513B3152}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebRaid.Node.WebDav.Tests", "WebRaid.Node.WebDav.Tests\WebRaid.Node.WebDav.Tests.csproj", "{F4237DD2-BC59-466F-AD7C-471D513B3152}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github-workflows", ".github-workflows", "{A3838BE3-ED44-4D05-B6FB-FFAB0A850ECF}"
+	ProjectSection(SolutionItems) = preProject
+		.github\workflows\dotnet.yml = .github\workflows\dotnet.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -177,6 +182,7 @@ Global
 		{25B7875D-61F8-44B9-94DF-EC446941B1F4} = {0826B985-8935-44B2-9EB7-1C2E344C0DEA}
 		{0575A58A-3BFD-4770-A2AD-EA1DB7D06B63} = {0826B985-8935-44B2-9EB7-1C2E344C0DEA}
 		{F4237DD2-BC59-466F-AD7C-471D513B3152} = {0826B985-8935-44B2-9EB7-1C2E344C0DEA}
+		{A3838BE3-ED44-4D05-B6FB-FFAB0A850ECF} = {1C202ED8-34E7-41AD-8220-A3EE2E5A243F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E51E0597-C0FE-488A-BFA9-9DFC5559A34D}

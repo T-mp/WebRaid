@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace WebRaid.VDS.JsonConverter
 {
-    public class JsonConverterDirectoryInfo : JsonConverter<DirectoryInfo>
+    internal class JsonConverterDirectoryInfo : JsonConverter<DirectoryInfo>
     {
         public override DirectoryInfo Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
