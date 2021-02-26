@@ -37,6 +37,7 @@ namespace WebRaid.Node.Lokal
         public async Task<Stream> Get(string adresse)
         {
             logger.LogDebug($"Get({adresse})");
+            if (string.IsNullOrWhiteSpace(adresse)) throw new ArgumentNullException(nameof(adresse));
             var path = Path.Combine(pfad, adresse);
             if (File.Exists(path))
             {
@@ -52,13 +53,14 @@ namespace WebRaid.Node.Lokal
         {
             logger.LogDebug($"Write({adresse})");
             if (string.IsNullOrWhiteSpace(adresse)) throw new ArgumentNullException(nameof(adresse));
+            if (input==null) throw new ArgumentNullException(nameof(input));
             var path = Path.Combine(pfad, adresse);
             var ordner = Path.GetDirectoryName(path);
-            if (string.IsNullOrWhiteSpace(ordner)) throw new DirectoryNotFoundException($"Pfad:'{path}' konnte nicht verarbeitet werden");
+            
             logger.LogTrace($"Write:path='{path}'");
             if (!Directory.Exists(ordner))
             {
-                logger.LogTrace($"Write:ordner='{ordner}' wird angelegt.");
+                logger.LogInformation($"Write:ordner='{ordner}' wird angelegt.");
                 Directory.CreateDirectory(ordner);
             }
             using (var outputStream = File.OpenWrite(path))
@@ -78,11 +80,12 @@ namespace WebRaid.Node.Lokal
             var path = Path.Combine(pfad, adresse);
             if (File.Exists(path))
             {
-                File.Delete(adresse);
+                logger.LogTrace($"'{path}' wird gelöscht.");
+                File.Delete(path);
                 return Task.FromResult(true);
             }
 
-            logger.LogWarning($"'{adresse}' nicht gefunden!");
+            logger.LogWarning($"'{path}' nicht gefunden!");
             return Task.FromResult(false);
         }
     }

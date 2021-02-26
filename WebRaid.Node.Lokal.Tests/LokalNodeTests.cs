@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -12,38 +13,43 @@ namespace WebRaid.Node.Lokal.Tests
     public class LokalNodeTests
     {
         private readonly TestLoggerFactory lf;
+        private IConfiguration configuration;
+        private string path;
 
         public LokalNodeTests()
         {
             lf = new TestLoggerFactory(LogLevel.Trace);
         }
-        [Test]
-        public async Task GetStream_NichtVorhandeneDatei_Gibt_null()
-        {
-            var path = Path.Combine(Path.GetTempPath(), "LokalNodeTests");
-            Directory.CreateDirectory(path);
 
-            var configuration = Substitute.For<IConfiguration>();
+        [SetUp]
+        public void SetUp()
+        {
+            path = InitTestOrdner("LokalNodeTests");
+
+            configuration = Substitute.For<IConfiguration>();
             configuration["Name"].Returns("Test1");
             configuration["Pfad"].Returns(path);
+        }
 
+        [TearDown]
+        public void TearDown()
+        {
+            KillTestOrdner(path);
+        }
+
+        #region Get
+        [Test]
+        public async Task Get_NichtVorhandeneDatei_Gibt_null()
+        {
             var unterTest = new Node(configuration, lf.Logger<Node>());
 
             var stream = await unterTest.Get("GibtEsNicht");
 
             stream.Should().BeNull();
-
-            Directory.Delete(path, true);
         }
         [Test]
-        public async Task GetStream_VorhandeneDatei_Gibt_InhaltAlsStream()
+        public async Task Get_VorhandeneDatei_Gibt_InhaltAlsStream()
         {
-            var path = InitTestOrdner("LokalNodeTests");
-
-            var configuration = Substitute.For<IConfiguration>();
-            configuration["Name"].Returns("Test1");
-            configuration["Pfad"].Returns(path);
-
             await File.WriteAllTextAsync(Path.Combine(path, "GibtEs"), "TestDaten");
 
             var unterTest = new Node(configuration, lf.Logger<Node>());
@@ -56,45 +62,128 @@ namespace WebRaid.Node.Lokal.Tests
             var gelesen = await reader.ReadToEndAsync();
             gelesen.Should().Be("TestDaten");
             reader.Close();
-
-            KillTestOrdner(path);
         }
 
         [Test]
-        public async Task WriteStream_ErstelltDatei()
+        public void Get_Adresse_Null_SchmeistFehler()
         {
-            var path = InitTestOrdner("LokalNodeTests");
+            var unterTest = new Node(configuration, lf.Logger<Node>());
 
-            var configuration = Substitute.For<IConfiguration>();
-            configuration["Name"].Returns("Test1");
-            configuration["Pfad"].Returns(path);
+            Func<Task> test = async () => await unterTest.Get(null);
 
+            test.Should().Throw<ArgumentNullException>().Where(e => e.ParamName == "adresse");
+        }
+        [Test]
+        public void Get_Adresse_lehr_SchmeistFehler()
+        {
+            var unterTest = new Node(configuration, lf.Logger<Node>());
+
+            Func<Task> test = async () => await unterTest.Get("");
+
+            test.Should().Throw<ArgumentNullException>().Where(e => e.ParamName == "adresse");
+        }
+        #endregion
+
+        #region Write
+        [Test]
+        public async Task Write_ErstelltDatei()
+        {
             var unterTest = new Node(configuration, lf.Logger<Node>());
 
             var resultat = await unterTest.Write("GibtEsNochNicht", GenerateStreamFromString("TestDaten;"));
 
             resultat.Should().BeTrue();
             File.Exists(Path.Combine(path, "GibtEsNochNicht")).Should().BeTrue();
-
-            KillTestOrdner(path);
         }
+
+        [Test]
+        public void Write_Adresse_Null_SchmeistFehler()
+        {
+            var unterTest = new Node(configuration, lf.Logger<Node>());
+
+            Func<Task> test = async () => await unterTest.Write(null, Stream.Null);
+
+            test.Should().Throw<ArgumentNullException>().Where(e => e.ParamName == "adresse");
+        }
+        [Test]
+        public void Write_Adresse_lehr_SchmeistFehler()
+        {
+            var unterTest = new Node(configuration, lf.Logger<Node>());
+
+            Func<Task> test = async () => await unterTest.Write("", Stream.Null);
+
+            test.Should().Throw<ArgumentNullException>().Where(e => e.ParamName == "adresse");
+        }
+        [Test]
+        public void Write_Input_lehr_SchmeistFehler()
+        {
+            var unterTest = new Node(configuration, lf.Logger<Node>());
+
+            Func<Task> test = async () => await unterTest.Write("adresse", null);
+
+            test.Should().Throw<ArgumentNullException>().Where(e => e.ParamName == "input");
+        }
+        #endregion
+
 
         [Test]
         public void NameWirdAusConfigurationGelesen()
         {
-            var path = InitTestOrdner("LokalNodeTests");
-
-            var configuration = Substitute.For<IConfiguration>();
-            configuration["Name"].Returns("Test1");
-            configuration["Pfad"].Returns(path);
-
             var unterTest = new Node(configuration, lf.Logger<Node>());
 
             unterTest.Name.Should().Be("Test1");
-
-            KillTestOrdner(path);
         }
-        
+
+        [Test]
+        public async Task ArbeitsPfadWirdAngelegt()
+        {
+            var arbeitsPfad = Path.Combine(path, "GibtsNochNicht");
+            configuration["Pfad"].Returns(arbeitsPfad);
+
+            var unterTest = new Node(configuration, lf.Logger<Node>());
+
+            var resultat = await unterTest.Write("EineAdresse", GenerateStreamFromString("TestDaten;"));
+
+            resultat.Should().BeTrue();
+
+            Directory.Exists(arbeitsPfad).Should().BeTrue();
+            lf.Loggs.Should().Contain(l
+                => l.Nachricht.Contains(arbeitsPfad)
+                && l.Nachricht.Contains("wird angelegt")
+                && l.LogLevel == LogLevel.Information
+                );
+        }
+
+        [Test]
+        public async Task Del_VorhandeneDatei_LöschtDatei()
+        {
+            var adresse = "GibtEs";
+            var datei = Path.Combine(path, adresse);
+
+            await File.WriteAllTextAsync(datei, "TestDaten");
+
+            var unterTest = new Node(configuration, lf.Logger<Node>());
+
+            var resultat = await unterTest.Del(adresse);
+            resultat.Should().BeTrue();
+
+            File.Exists(datei).Should().BeFalse();
+        }
+        [Test]
+        public async Task Del_NichtVorhandeneDatei_GibtFalseZurück()
+        {
+            var adresse = "GibtEsNicht";
+            var datei = Path.Combine(path, adresse);
+
+            var unterTest = new Node(configuration, lf.Logger<Node>());
+
+            var resultat = await unterTest.Del(adresse);
+            resultat.Should().BeFalse();
+
+            File.Exists(datei).Should().BeFalse();
+        }
+
+        #region Helper
         private static string InitTestOrdner(string testOrdnerName)
         {
             var path = Path.Combine(Path.GetTempPath(), testOrdnerName);
@@ -105,7 +194,6 @@ namespace WebRaid.Node.Lokal.Tests
             Directory.CreateDirectory(path);
             return path;
         }
-
         private static void KillTestOrdner(string path)
         {
             if (Directory.Exists(path))
@@ -113,7 +201,6 @@ namespace WebRaid.Node.Lokal.Tests
                 Directory.Delete(path, true);
             }
         }
-
         public static Stream GenerateStreamFromString(string s)
         {
             var stream = new MemoryStream();
@@ -123,5 +210,6 @@ namespace WebRaid.Node.Lokal.Tests
             stream.Position = 0;
             return stream;
         }
+        #endregion
     }
 }
