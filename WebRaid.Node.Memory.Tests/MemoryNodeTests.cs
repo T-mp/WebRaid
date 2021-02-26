@@ -14,7 +14,7 @@ namespace WebRaid.Node.Memory.Tests
         public MemoryNodeTests() : base(LogLevel.Trace) { }
 
         [Test]
-        public async Task GetFile_NichtVorhanden_Gibt_null()
+        public async Task Get_NichtVorhanden_Gibt_null()
         {
             var configuration = Substitute.For<IConfiguration>();
             configuration["Name"].Returns("Test1");
@@ -26,7 +26,7 @@ namespace WebRaid.Node.Memory.Tests
             stream.Should().BeNull();
         }
         [Test]
-        public async Task GetFile_Vorhanden_Gibt_InhaltAlsStream()
+        public async Task Get_Vorhanden_Gibt_InhaltAlsStream()
         {
             var configuration = Substitute.For<IConfiguration>();
             configuration["Name"].Returns("Test1");
@@ -46,7 +46,7 @@ namespace WebRaid.Node.Memory.Tests
         }
 
         [Test]
-        public async Task WriteFile_Erstellt()
+        public async Task Write_Erstellt()
         {
             var configuration = Substitute.For<IConfiguration>();
             configuration["Name"].Returns("Test1");
@@ -61,29 +61,30 @@ namespace WebRaid.Node.Memory.Tests
         }
 
         [Test]
+        public async Task Del_Löscht()
+        {
+            var configuration = Substitute.For<IConfiguration>();
+            configuration["Name"].Returns("Test1");
+
+            var unterTest = new Node(configuration, Lf.Logger<Node>());
+
+            unterTest.Speicher.Add("GibtEs", GenerateStreamFromString("TestDaten"));
+
+            var resultat = await unterTest.Del("GibtEs");
+            resultat.Should().BeTrue();
+
+            unterTest.Speicher.Should().NotContainKey("GibtEs");
+        }
+
+        [Test]
         public void NameWirdAusConfigurationGelesen()
         {
-            var path = Path.Combine(Path.GetTempPath(), "MemoryNodeTests");
-            Directory.CreateDirectory(path);
-
             var configuration = Substitute.For<IConfiguration>();
             configuration["Name"].Returns("Test1");
 
             var unterTest = new Node(configuration, Lf.Logger<Node>());
 
             unterTest.Name.Should().Be("Test1");
-
-            Directory.Delete(path, true);
-        }
-
-        public static Stream GenerateStreamFromString(string s)
-        {
-            var stream = new MemoryStream();
-            var writer = new StreamWriter(stream);
-            writer.Write(s);
-            writer.Flush();
-            stream.Position = 0;
-            return stream;
         }
     }
 }

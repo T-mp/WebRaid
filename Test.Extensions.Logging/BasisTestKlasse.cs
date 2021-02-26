@@ -1,3 +1,4 @@
+using System.IO;
 using Microsoft.Extensions.Logging;
 
 namespace Test.Extensions.Logging
@@ -18,6 +19,20 @@ namespace Test.Extensions.Logging
         protected BasisTestKlasse(LogLevel logLevel = LogLevel.Information)
         {
             Lf = new TestLoggerFactory(logLevel);
+        }
+
+        /// <summary>
+        /// Generates the stream from string.
+        /// </summary>
+        /// <param name="s">Der Inhalt des Streams</param>
+        protected static Stream GenerateStreamFromString(string s)
+        {
+            var stream = new MemoryStream();
+            var writer = new StreamWriter(stream);
+            writer.Write(s);
+            writer.Flush();
+            stream.Position = 0;
+            return stream;
         }
     }
 }
