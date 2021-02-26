@@ -155,7 +155,7 @@ namespace WebRaid.Node.Lokal.Tests
         }
 
         [Test]
-        public async Task Del_VorhandeneDatei_LöschtDatei()
+        public async Task Del_VorhandeneDatei_LoeschtDatei()
         {
             var adresse = "GibtEs";
             var datei = Path.Combine(path, adresse);
@@ -170,7 +170,7 @@ namespace WebRaid.Node.Lokal.Tests
             File.Exists(datei).Should().BeFalse();
         }
         [Test]
-        public async Task Del_NichtVorhandeneDatei_GibtFalseZurück()
+        public async Task Del_NichtVorhandeneDatei_GibtFalseZurueck()
         {
             var adresse = "GibtEsNicht";
             var datei = Path.Combine(path, adresse);

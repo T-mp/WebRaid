@@ -61,7 +61,7 @@ namespace WebRaid.Node.Memory.Tests
         }
 
         [Test]
-        public async Task Del_Löscht()
+        public async Task Del_Loescht()
         {
             var configuration = Substitute.For<IConfiguration>();
             configuration["Name"].Returns("Test1");
