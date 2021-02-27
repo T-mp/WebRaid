@@ -20,6 +20,9 @@ namespace WebRaid.VDS
         private readonly INode persistenz;
         private readonly IFileAdressenGenerator adressenGenerator;
         private readonly ILogger<DirectoryInfo> logger;
+        /// <summary>
+        /// Der Informationen über den direkten Inhalt 
+        /// </summary>
         [JsonInclude]
         public readonly Dictionary<string, IFileSystemInfo> Inhalt = new Dictionary<string, IFileSystemInfo>();
 
@@ -64,10 +67,9 @@ namespace WebRaid.VDS
         /// Holt das RootDirectory
         /// </summary>
         /// <param name="persistenz">Zugrundeliegende Persistenzschicht</param>
-        /// <param name="name"></param>
+        /// <param name="name">Name des RootDirectories</param>
         /// <param name="adressenGenerator">Generator für eindeutige Adressen</param>
-        /// <param name="logger"></param>
-        /// <returns></returns>
+        /// <param name="logger">Logger zur Fehlersuche</param>
         /// <exception cref="ArgumentNullException"></exception>
         /// <exception cref="ArgumentOutOfRangeException"></exception>
         public static DirectoryInfo GetRoot(INode persistenz, string name, IFileAdressenGenerator adressenGenerator, ILogger<DirectoryInfo> logger)
@@ -89,6 +91,7 @@ namespace WebRaid.VDS
         /// <param name="persistenz">Zugrundeliegende Persistenzschicht</param>
         /// <param name="adresse">Adresse in der <paramref name="persistenz"/></param>
         /// <param name="adressenGenerator">Generator für eindeutige Adressen</param>
+        /// <param name="logger"></param>
         public DirectoryInfo(INode persistenz, string adresse, IFileAdressenGenerator adressenGenerator, ILogger<DirectoryInfo> logger)
             : this(persistenz, adressenGenerator, logger)
         {
