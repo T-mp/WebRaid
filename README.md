@@ -15,7 +15,7 @@ Allerdings habe keine Lust auf Treiber schreiben und mir gefällt der Blockspeic
 So bin ich auf die Idee gekommen das Ganze Dateibasiert auf zu ziehen und als Schnittstelle für die Programme / die Betriebssysteme WebDav zu verwenden.
 
 ## Ziele
-- Beliebiges Programm greift auf Dateien / Ordner zu. Das Betriebssystem erfüllt diese Anfrage in dem es transparent auf mehrere Cloud-Speicher zugreift.
+- Beliebiges Programm greift auf Dateien / Ordner zu. Das Betriebssystem erfüllt diese Anfrage in dem es transparent, über WebDav und diesen Dienst auf mehrere Cloud-Speicher zugreift.
 - Wenn einige (nicht zu fiele) Cloud-Speicher nicht verfügbar sind merkt das Programm nix.
 - Cloud-Speicher können beliebig hinzugefügt werden und im Rahmen der genutzten Kapazitäten auch entfernt oder ausgetaucht werden. (Ohne nennenswerte Auswirkungen auf das verwendende Programm.)
 
@@ -25,7 +25,7 @@ Die Idee hinter RAID ist, glaube ich, schon alt genug, dass sie als Gemeingut in
 Ob die Cloud-Speicher-Dienste diese Verwendung als „normale“ Nutzung betrachten, dulden oder verbieten ist im Einzelfall, vom Anwender, zu klären.
 
 Die Techniken welche ich verwende und nicht von mir sind (z.B. WebDav, ReedSolomon) können geschützt sein!  
-Hier ist jeder potentielle Anwender selber verantwortlich zu klären ob sie in seinem rechtlichen Umfeld diese benutzt werden dürfen oder nicht!
+Hier ist jeder potentielle Anwender selber verantwortlich zu klären ob, diese in seinem rechtlichen Umfeld benutzt werden dürfen oder nicht!
 
 Jegliche Verwendung / Nennung von Marken oder anderweitig geschützten Begriffen dient nur der Illustration, ich mache mir davon nichts zu Eigen.  
 **Alle Rechte Dritter bleiben bei diesen!**
@@ -35,7 +35,7 @@ Im Zweifel dient das ganze Projekt nur der Information / Schulung der lesenden P
 **Das Ganze wird **ohne jegliche** Gewährleistung und nur zur Information zur Verfügung gestellt.**
 
 Sollte ein Rechteinhaber der Meinung sein das ich hier seine Rechte missachte:  
-Bitte melden, die Kosten für einen Anwalt kann man sich sicherlich sparen.  
+Bitte melden, die Kosten für einen Anwalt können Sie sich sparen.  
 Das Projekt ist nur ein privates Hobby, ich verfolge keinerlei finanziellen Interessen damit.
 
 Sollte Jemand Interesse an meiner Schöpfung haben:
