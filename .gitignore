@@ -349,3 +349,6 @@ MigrationBackup/
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
 /CodeGraphData
+/WebRaid.Main.WinService/Install.ps1
+/WebRaid.Main.WinService/Stop.cmd
+/WebRaid.Main.WinService/Start.cmd

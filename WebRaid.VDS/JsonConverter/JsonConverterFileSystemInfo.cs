@@ -20,6 +20,7 @@ namespace WebRaid.VDS.JsonConverter
         {
             writer.WriteStartObject();
             //Selector für die Deserialization
+            Logger?.LogTrace($"{value.GetType().Name}:{{");
             writer.WriteString("type", value.GetType().Name);
             writer.WriteString(nameof(value.FullName), value.FullName);
             writer.WriteString(nameof(value.Adresse), value.Adresse);
@@ -38,7 +39,7 @@ namespace WebRaid.VDS.JsonConverter
                 case DirectoryInfo dir:
                     writer.WritePropertyName(nameof(dir.Inhalt));
                     writer.WriteStartObject();
-                    var inhaltConverter = options.GetConverter(typeof(object));
+                    
                     foreach (var eintrag in dir.Inhalt)
                     {
                         writer.WritePropertyName(eintrag.Key);

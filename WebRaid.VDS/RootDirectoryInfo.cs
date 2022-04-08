@@ -1,21 +1,21 @@
-﻿using System.Text.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
 using System.Text;
-using WebRaid.Abstraction.Speicher;
-using WebRaid.Abstraction.VDS;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
+using WebRaid.Abstraction.Speicher;
+using WebRaid.Abstraction.VDS;
 using WebRaid.VDS.JsonConverter;
 
 namespace WebRaid.VDS
 {
     /// <inheritdoc cref="IDirectoryInfo" />
     [JsonConverter(typeof(JsonConverterDirectoryInfo))]
-    public class DirectoryInfo : FileSystemInfo, IDirectoryInfo
+    public class RootDirectoryInfo : FileSystemInfo, IDirectoryInfo
     {
         private readonly INode persistenz;
         private readonly IFileAdressenGenerator adressenGenerator;
@@ -26,14 +26,14 @@ namespace WebRaid.VDS
         [JsonInclude]
         public readonly Dictionary<string, IFileSystemInfo> Inhalt = new Dictionary<string, IFileSystemInfo>();
 
-        private DirectoryInfo(INode persistenz, IFileAdressenGenerator adressenGenerator, ILogger<DirectoryInfo> logger)
+        private RootDirectoryInfo(INode persistenz, IFileAdressenGenerator adressenGenerator, ILogger<DirectoryInfo> logger)
         {
             this.logger = logger ?? throw new ArgumentNullException(nameof(logger));
             this.persistenz = persistenz ?? throw new ArgumentNullException(nameof(persistenz));
             this.adressenGenerator = adressenGenerator ?? throw new ArgumentNullException(nameof(adressenGenerator));
         }
 
-        internal DirectoryInfo(INode persistenz, IFileAdressenGenerator adressenGenerator, string fullName, ILogger<DirectoryInfo> logger)
+        private RootDirectoryInfo(INode persistenz, IFileAdressenGenerator adressenGenerator, string fullName, ILogger<DirectoryInfo> logger)
             : this(persistenz, adressenGenerator, logger)
         {
             if (string.IsNullOrWhiteSpace(fullName)) throw new ArgumentNullException(nameof(fullName));
@@ -62,29 +62,6 @@ namespace WebRaid.VDS
             persistenz.Write(Adresse, stream);
         }
 
-
-        /// <summary>
-        /// Holt das RootDirectory
-        /// </summary>
-        /// <param name="persistenz">Zugrundeliegende Persistenzschicht</param>
-        /// <param name="name">Name des RootDirectories</param>
-        /// <param name="adressenGenerator">Generator für eindeutige Adressen</param>
-        /// <param name="logger">Logger zur Fehlersuche</param>
-        /// <exception cref="ArgumentNullException"></exception>
-        /// <exception cref="ArgumentOutOfRangeException"></exception>
-        public static DirectoryInfo GetRoot(INode persistenz, string name, IFileAdressenGenerator adressenGenerator, ILogger<DirectoryInfo> logger)
-        {
-            logger.LogTrace($"GetRoot({name})");
-            if (persistenz == null) throw new ArgumentNullException(nameof(persistenz));
-            if (string.IsNullOrWhiteSpace(name)) throw new ArgumentNullException(nameof(name));
-            if (adressenGenerator == null) throw new ArgumentNullException(nameof(adressenGenerator));
-            if (logger == null) throw new ArgumentNullException(nameof(logger));
-
-            if (!name.StartsWith(Pfad.DirectorySeparatorString)) throw new ArgumentOutOfRangeException(nameof(name), "Der Pfad muss bis zum Root gehen!");
-
-            return new DirectoryInfo(persistenz, adressenGenerator, $"{name}", logger);
-        }
-
         /// <summary>
         /// Läd ein <see cref="DirectoryInfo"/> von der <paramref name="adresse"/>
         /// </summary>
@@ -92,7 +69,7 @@ namespace WebRaid.VDS
         /// <param name="adresse">Adresse in der <paramref name="persistenz"/></param>
         /// <param name="adressenGenerator">Generator für eindeutige Adressen</param>
         /// <param name="logger"></param>
-        public DirectoryInfo(INode persistenz, string adresse, IFileAdressenGenerator adressenGenerator, ILogger<DirectoryInfo> logger)
+        public RootDirectoryInfo(INode persistenz, string adresse, IFileAdressenGenerator adressenGenerator, ILogger<DirectoryInfo> logger)
             : this(persistenz, adressenGenerator, logger)
         {
             if (string.IsNullOrWhiteSpace(adresse)) throw new ArgumentNullException(nameof(adresse));
@@ -110,18 +87,18 @@ namespace WebRaid.VDS
             Inhalt = readDto.Inhalt.ToDictionary(
                 pair => pair.Key, 
                 pair =>
-                        {
-                            switch (pair.Value)
-                            {
-                                case DirectoryInfoReadDto dir:
-                                    return (IFileSystemInfo)new DirectoryInfo(persistenz, dir.Adresse, adressenGenerator, logger);
-                                case FileInfoReadDto file:
-                                    return new FileInfo();
-                                default:
-                                    throw new NotSupportedException();
-                            }
-                        }
-                );
+                {
+                    switch (pair.Value)
+                    {
+                        case DirectoryInfoReadDto dir:
+                            return (IFileSystemInfo)new DirectoryInfo(persistenz, dir.Adresse, adressenGenerator, logger);
+                        case FileInfoReadDto file:
+                            return new FileInfo();
+                        default:
+                            throw new NotSupportedException();
+                    }
+                }
+            );
             Properties = readDto.Properties;
             logger.LogTrace($"New DirectoryInfo({adresse})[{FullName}]");
         }

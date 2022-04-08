@@ -34,7 +34,7 @@ namespace WebRaid.VDS.JsonConverter
                     break;
                 default:
                     throw new JsonException();
-            };
+            }
             result.FullName = GetString(ref reader, nameof(result.FullName));
             result.Adresse = GetString(ref reader, nameof(result.Adresse));
 
@@ -111,7 +111,7 @@ namespace WebRaid.VDS.JsonConverter
                     break;
                 default:
                     throw new JsonException();
-            };
+            }
 
             return result;
         }

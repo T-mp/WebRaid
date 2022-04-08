@@ -115,7 +115,6 @@ namespace WebRaid.VDS.Tests
             var stream = node.Get(adresse);
             var streamReader = new StreamReader(stream.Result);
             streamReader.ReadToEnd().Should().Be(inhalt);
-
         }
     }
 }
