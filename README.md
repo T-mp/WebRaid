@@ -1,3 +1,6 @@
+#Status
+Nur gelegentliche, sporadische Entwicklung. (TooManyProjectsException ;-( )
+
 # WebRaid
 ## Idee
 Die billigen (zum Teil kostenlosen) Angebote sind naturgemäß "unzuverlässig" (im Verhältnis zu teuer bezahlten) und auch in der Kapazität begrenzt.
