@@ -1,11 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
-  </PropertyGroup>
-  <PropertyGroup>
-    <InternalsVisibleToSuffix>.Tests</InternalsVisibleToSuffix>
-    <InternalsVisibleTo>WebRaid.Main.WinService</InternalsVisibleTo>
+    <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
 
 </Project>

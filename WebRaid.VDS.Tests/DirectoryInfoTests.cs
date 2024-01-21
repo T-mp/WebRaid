@@ -107,7 +107,7 @@ namespace WebRaid.VDS.Tests
             var dir = new DirectoryInfo(node, "Test/Dir1", adressenGenerator, Lf.Logger<DirectoryInfo>());
             dir.FullName.Should().Be("/Test");
 
-            dir.Inhalt.Should().ContainKey("Udir1").WhichValue.FullName.Should().Be("/Test/Udir1");
+            dir.Inhalt.Should().ContainKey("Udir1").WhoseValue.FullName.Should().Be("/Test/Udir1");
         }
 
         private void TesteNodeInhalt(INode node, string adresse, string inhalt)

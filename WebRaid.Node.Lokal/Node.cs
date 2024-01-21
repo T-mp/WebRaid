@@ -37,7 +37,8 @@ namespace WebRaid.Node.Lokal
         public async Task<Stream> Get(string adresse)
         {
             logger.LogDebug($"Get({adresse})");
-            if (string.IsNullOrWhiteSpace(adresse)) throw new ArgumentNullException(nameof(adresse));
+            AssertAdresseNotIsNullOrWhiteSpace(adresse);
+
             var path = Path.Combine(pfad, adresse);
             if (File.Exists(path))
             {
@@ -52,8 +53,9 @@ namespace WebRaid.Node.Lokal
         public async Task<bool> Write(string adresse, Stream input)
         {
             logger.LogDebug($"Write({adresse})");
-            if (string.IsNullOrWhiteSpace(adresse)) throw new ArgumentNullException(nameof(adresse));
+            AssertAdresseNotIsNullOrWhiteSpace(adresse);
             if (input==null) throw new ArgumentNullException(nameof(input));
+
             var path = Path.Combine(pfad, adresse);
             var ordner = Path.GetDirectoryName(path);
             
@@ -77,6 +79,8 @@ namespace WebRaid.Node.Lokal
         public Task<bool> Del(string adresse)
         {
             logger.LogDebug($"Del({adresse})");
+            AssertAdresseNotIsNullOrWhiteSpace(adresse);
+
             var path = Path.Combine(pfad, adresse);
             if (File.Exists(path))
             {
@@ -87,6 +91,12 @@ namespace WebRaid.Node.Lokal
 
             logger.LogWarning($"'{path}' nicht gefunden!");
             return Task.FromResult(false);
+        }
+        
+        private void AssertAdresseNotIsNullOrWhiteSpace(string adresse)
+        {
+            if (adresse == null) throw new ArgumentNullException(nameof(adresse), "Eine Adresse wird benötigt!");
+            if (string.IsNullOrWhiteSpace(adresse)) throw new ArgumentOutOfRangeException(nameof(adresse), "Eine Adresse wird benötigt!");
         }
     }
 }

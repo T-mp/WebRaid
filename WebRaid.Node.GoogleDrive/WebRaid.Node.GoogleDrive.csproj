@@ -8,6 +8,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\WebRaid.Abstraction\WebRaid.Abstraction.csproj" />
-  </ItemGroup>
+  
+    <PackageReference Include="Google.Apis.Drive.v3" Version="1.59.0.2958" />
+  </ItemGroup> 
 
 </Project>

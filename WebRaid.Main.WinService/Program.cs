@@ -15,7 +15,7 @@ namespace WebRaid.Main.WinService
                 .UseWindowsService()
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
-                    webBuilder.UseStartup<WebRaid.Main.Startup>();
+                    webBuilder.UseStartup<Startup>();
                 });
     }
 }

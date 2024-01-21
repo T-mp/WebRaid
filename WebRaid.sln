@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30523.141
+# Visual Studio Version 17
+VisualStudioVersion = 17.3.32728.150
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infrastruktur", "Infrastruktur", "{0826B985-8935-44B2-9EB7-1C2E344C0DEA}"
 EndProject
@@ -72,11 +72,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github-workflows", ".githu
 		.github\workflows\dotnet.yml = .github\workflows\dotnet.yml
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebRaid.Main.WinService", "WebRaid.Main.WinService\WebRaid.Main.WinService.csproj", "{4CC8E136-F8EC-4F22-A0E7-F88B315B6F66}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebRaid.Main.WinService", "WebRaid.Main.WinService\WebRaid.Main.WinService.csproj", "{4CC8E136-F8EC-4F22-A0E7-F88B315B6F66}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebRaid.Main", "WebRaid.Main\WebRaid.Main.csproj", "{E1F4C94A-93A9-48B4-B668-FB361CCF5E38}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WinServiceTestHelper", "WinServiceTestHelper\WinServiceTestHelper.csproj", "{2A9EC72B-E1F5-4BD9-9F77-264B9CF8448E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WinServiceTestHelper", "WinServiceTestHelper\WinServiceTestHelper.csproj", "{2A9EC72B-E1F5-4BD9-9F77-264B9CF8448E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebRaid.Main", "WebRaid.Main\WebRaid.Main.csproj", "{456A7D63-67D0-4DC1-B45B-26C840DB43EA}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebRaid.Node.TestsBase", "WebRaid.Node.TestsBase\WebRaid.Node.TestsBase.csproj", "{EDD45AD8-972C-4A1C-BEE7-6A884A3F5EC3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebRaid.CsWin32", "WebRaid.CsWin32\WebRaid.CsWin32.csproj", "{14BED44B-2536-4DE5-B102-C1F2E1977ED5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -168,14 +172,22 @@ Global
 		{4CC8E136-F8EC-4F22-A0E7-F88B315B6F66}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4CC8E136-F8EC-4F22-A0E7-F88B315B6F66}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4CC8E136-F8EC-4F22-A0E7-F88B315B6F66}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E1F4C94A-93A9-48B4-B668-FB361CCF5E38}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E1F4C94A-93A9-48B4-B668-FB361CCF5E38}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E1F4C94A-93A9-48B4-B668-FB361CCF5E38}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E1F4C94A-93A9-48B4-B668-FB361CCF5E38}.Release|Any CPU.Build.0 = Release|Any CPU
 		{2A9EC72B-E1F5-4BD9-9F77-264B9CF8448E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{2A9EC72B-E1F5-4BD9-9F77-264B9CF8448E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2A9EC72B-E1F5-4BD9-9F77-264B9CF8448E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2A9EC72B-E1F5-4BD9-9F77-264B9CF8448E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{456A7D63-67D0-4DC1-B45B-26C840DB43EA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{456A7D63-67D0-4DC1-B45B-26C840DB43EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{456A7D63-67D0-4DC1-B45B-26C840DB43EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{456A7D63-67D0-4DC1-B45B-26C840DB43EA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EDD45AD8-972C-4A1C-BEE7-6A884A3F5EC3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EDD45AD8-972C-4A1C-BEE7-6A884A3F5EC3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EDD45AD8-972C-4A1C-BEE7-6A884A3F5EC3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EDD45AD8-972C-4A1C-BEE7-6A884A3F5EC3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{14BED44B-2536-4DE5-B102-C1F2E1977ED5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{14BED44B-2536-4DE5-B102-C1F2E1977ED5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{14BED44B-2536-4DE5-B102-C1F2E1977ED5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{14BED44B-2536-4DE5-B102-C1F2E1977ED5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -201,6 +213,7 @@ Global
 		{0575A58A-3BFD-4770-A2AD-EA1DB7D06B63} = {0826B985-8935-44B2-9EB7-1C2E344C0DEA}
 		{F4237DD2-BC59-466F-AD7C-471D513B3152} = {0826B985-8935-44B2-9EB7-1C2E344C0DEA}
 		{A3838BE3-ED44-4D05-B6FB-FFAB0A850ECF} = {1C202ED8-34E7-41AD-8220-A3EE2E5A243F}
+		{EDD45AD8-972C-4A1C-BEE7-6A884A3F5EC3} = {0826B985-8935-44B2-9EB7-1C2E344C0DEA}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E51E0597-C0FE-488A-BFA9-9DFC5559A34D}
