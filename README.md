@@ -1,4 +1,4 @@
-#Status
+# Status
 Nur gelegentliche, sporadische Entwicklung. (TooManyProjectsException ;-( )
 
 # WebRaid
@@ -14,7 +14,7 @@ Diesen Ansatz unabhängigen, billigen Speicher zusammen zu fassen, kann man auch
 Leider habe ich (auf die Schnelle) nix gefunden was dies umsetzt.
 
 Da ich nicht nur Beruflich Software entwickle, habe ich dieses Projekt begonnen.  
-Allerdings habe keine Lust auf Treiber schreiben und mir gefällt der Blockspeicher-Ansatz auch nicht.  
+Allerdings habe ich keine Lust auf Treiber schreiben und mir gefällt der Blockspeicher-Ansatz auch nicht so gut.  
 So bin ich auf die Idee gekommen das Ganze Dateibasiert auf zu ziehen und als Schnittstelle für die Programme / die Betriebssysteme WebDav zu verwenden.
 
 ## Ziele
@@ -23,7 +23,9 @@ So bin ich auf die Idee gekommen das Ganze Dateibasiert auf zu ziehen und als Sc
 - Cloud-Speicher können beliebig hinzugefügt werden und im Rahmen der genutzten Kapazitäten auch entfernt oder ausgetaucht werden. (Ohne nennenswerte Auswirkungen auf das verwendende Programm.)
 
 ## Rechtliches
-Die Idee hinter RAID ist, glaube ich, schon alt genug, dass sie als Gemeingut in der IT durch geht.
+Die Idee hinter RAID ist, glaube ich, eigentlich schon alt genug, dass sie als Gemeingut in der IT durch geht.
+
+Allerding gibt es laut https://patents.google.com/patent/US7334156B2/en einige Patente in die Richtung (auch die Patentzitate beachten).
 
 Ob die Cloud-Speicher-Dienste diese Verwendung als „normale“ Nutzung betrachten, dulden oder verbieten ist im Einzelfall, vom Anwender, zu klären.
 
