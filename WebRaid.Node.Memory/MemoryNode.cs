@@ -45,7 +45,7 @@ namespace WebRaid.Node.Memory
                 Speicher[adresse] = new MemoryStream();
             }
 
-            Speicher[adresse].Position = 0;
+            Speicher[adresse].SetLength(0);
             await input.CopyToAsync(Speicher[adresse])
                 .ConfigureAwait(false);
 

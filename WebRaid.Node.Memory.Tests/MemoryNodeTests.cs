@@ -1,4 +1,4 @@
-using FluentAssertions;
+﻿using FluentAssertions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
@@ -58,6 +58,21 @@ namespace WebRaid.Node.Memory.Tests
             resultat.Should().BeTrue();
 
             unterTest.Speicher.Should().ContainKey("GibtEsNochNicht");
+        }
+
+        [Test]
+        public async Task WriteFile_KuerzererInhalt_UeberschreibtVollstaendig()
+        {
+            var configuration = Substitute.For<IConfiguration>();
+            configuration["Name"].Returns("Test1");
+
+            var unterTest = new MemoryNode(configuration, Lf.Logger<MemoryNode>());
+            await unterTest.Write("GibtEs", GenerateStreamFromString("Alter, längerer Inhalt"));
+
+            await unterTest.Write("GibtEs", GenerateStreamFromString("Neu"));
+
+            var reader = new StreamReader(await unterTest.Get("GibtEs"));
+            (await reader.ReadToEndAsync()).Should().Be("Neu");
         }
 
         [Test]

@@ -7,6 +7,7 @@ using NWebDav.Server;
 using NWebDav.Server.AspNetCore;
 using WebRaid.UI.Adapters;
 using WebRaid.Node.Lokal;
+using WebRaid.Node.WebDav;
 
 namespace WebRaid.UI
 {
@@ -26,6 +27,7 @@ namespace WebRaid.UI
             services.AddSingleton<IWebDavDispatcher, WebDavDispatcher>();
 
             services.AddWebRaidLokalNodes(Configuration);
+            services.AddWebRaidWebDavNodes(Configuration);
         }
 
         // ReSharper disable once UnusedMember.Global, This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

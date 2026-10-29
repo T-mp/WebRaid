@@ -14,6 +14,7 @@
     <ProjectReference Include="..\WebRaid.Node.GoogleDrive\WebRaid.Node.GoogleDrive.csproj" />
     <ProjectReference Include="..\WebRaid.Node.Lokal\WebRaid.Node.Lokal.csproj" />
     <ProjectReference Include="..\WebRaid.Node.OneDrive\WebRaid.Node.OneDrive.csproj" />
+    <ProjectReference Include="..\WebRaid.Node.WebDav\WebRaid.Node.WebDav.csproj" />
     <ProjectReference Include="..\WebRaid.Node.WebDe\WebRaid.Node.WebDe.csproj" />
   </ItemGroup>
 

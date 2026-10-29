@@ -61,7 +61,7 @@ namespace WebRaid.Node.Lokal
                 logger.LogTrace($"Write:ordner='{ordner}' wird angelegt.");
                 Directory.CreateDirectory(ordner);
             }
-            using (var outputStream = File.OpenWrite(path))
+            using (var outputStream = File.Create(path))
             {
                 await input.CopyToAsync(outputStream)
                       .ConfigureAwait(false);
@@ -78,7 +78,7 @@ namespace WebRaid.Node.Lokal
             var path = Path.Combine(pfad, adresse);
             if (File.Exists(path))
             {
-                File.Delete(adresse);
+                File.Delete(path);
                 return Task.FromResult(true);
             }
 

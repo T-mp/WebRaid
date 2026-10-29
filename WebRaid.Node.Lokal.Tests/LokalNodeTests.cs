@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Microsoft.Extensions.Configuration;
@@ -75,6 +75,46 @@ namespace WebRaid.Node.Lokal.Tests
 
             resultat.Should().BeTrue();
             File.Exists(Path.Combine(path, "GibtEsNochNicht")).Should().BeTrue();
+
+            KillTestOrdner(path);
+        }
+
+        [Test]
+        public async Task WriteStream_KuerzererInhalt_UeberschreibtVollstaendig()
+        {
+            var path = InitTestOrdner("LokalNodeTests");
+
+            var configuration = Substitute.For<IConfiguration>();
+            configuration["Name"].Returns("Test1");
+            configuration["Pfad"].Returns(path);
+
+            var unterTest = new Node(configuration, lf.Logger<Node>());
+            await unterTest.Write("GibtEs", GenerateStreamFromString("Alter, längerer Inhalt"));
+
+            await unterTest.Write("GibtEs", GenerateStreamFromString("Neu"));
+
+            (await File.ReadAllTextAsync(Path.Combine(path, "GibtEs"))).Should().Be("Neu");
+
+            KillTestOrdner(path);
+        }
+
+        [Test]
+        public async Task Del_VorhandeneDatei_LoeschtDatei()
+        {
+            var path = InitTestOrdner("LokalNodeTests");
+
+            var configuration = Substitute.For<IConfiguration>();
+            configuration["Name"].Returns("Test1");
+            configuration["Pfad"].Returns(path);
+
+            await File.WriteAllTextAsync(Path.Combine(path, "GibtEs"), "TestDaten");
+
+            var unterTest = new Node(configuration, lf.Logger<Node>());
+
+            var resultat = await unterTest.Del("GibtEs");
+
+            resultat.Should().BeTrue();
+            File.Exists(Path.Combine(path, "GibtEs")).Should().BeFalse();
 
             KillTestOrdner(path);
         }
