@@ -7,17 +7,9 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using NUnit.Framework;
-using NWebDav.Server;
-using NWebDav.Server.AspNetCore;
-using NWebDav.Server.Stores;
 using Test.Extensions.Logging;
 
 namespace WebRaid.Node.WebDav.Tests
@@ -27,8 +19,8 @@ namespace WebRaid.Node.WebDav.Tests
     /// </summary>
     public class WebDavNodeTests : BasisTestKlasse
     {
+        private WebDavTestServer server;
         private string ordner;
-        private IHost host;
         private HttpClient client;
 
         public WebDavNodeTests() : base(LogLevel.Trace) { }
@@ -36,34 +28,15 @@ namespace WebRaid.Node.WebDav.Tests
         [SetUp]
         public async Task Setup()
         {
-            ordner = Path.Combine(Path.GetTempPath(), "WebDavNodeTests", Guid.NewGuid().ToString("N"));
-            Directory.CreateDirectory(ordner);
-
-            host = await new HostBuilder()
-                .ConfigureWebHost(web => web
-                    .UseTestServer()
-                    .ConfigureServices(s => s.Configure<TestServerOptions>(o => o.AllowSynchronousIO = true))
-                    .Configure(app =>
-                    {
-                        var dispatcher = new WebDavDispatcher(new DiskStore(ordner), new RequestHandlerFactory());
-                        app.Run(context =>
-                        {
-                            // NWebDav braucht eine Gegenstelle, der TestServer liefert keine
-                            context.Connection.RemoteIpAddress = IPAddress.Loopback;
-                            return dispatcher.DispatchRequestAsync(new AspNetCoreContext(context));
-                        });
-                    }))
-                .StartAsync();
-            client = host.GetTestClient();
+            server = await WebDavTestServer.Starten();
+            ordner = server.Ordner;
+            client = server.Client;
         }
 
         [TearDown]
         public async Task TearDown()
         {
-            client.Dispose();
-            await host.StopAsync();
-            host.Dispose();
-            Directory.Delete(ordner, true);
+            await server.DisposeAsync();
         }
 
         private WebDavNode UnterTest(string url = "http://localhost/", HttpClient httpClient = null,

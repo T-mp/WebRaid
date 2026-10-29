@@ -37,6 +37,7 @@ namespace WebRaid.Node.Lokal
         public async Task<Stream> Get(string adresse)
         {
             logger.LogDebug($"Get({adresse})");
+            Adresse.Pruefen(adresse);
             var path = Path.Combine(pfad, adresse);
             if (File.Exists(path))
             {
@@ -51,7 +52,8 @@ namespace WebRaid.Node.Lokal
         public async Task<bool> Write(string adresse, Stream input)
         {
             logger.LogDebug($"Write({adresse})");
-            if (string.IsNullOrWhiteSpace(adresse)) throw new ArgumentNullException(nameof(adresse));
+            Adresse.Pruefen(adresse);
+            if (input == null) throw new ArgumentNullException(nameof(input));
             var path = Path.Combine(pfad, adresse);
             var ordner = Path.GetDirectoryName(path);
             if (string.IsNullOrWhiteSpace(ordner)) throw new DirectoryNotFoundException($"Pfad:'{path}' konnte nicht verarbeitet werden");
@@ -75,6 +77,7 @@ namespace WebRaid.Node.Lokal
         public Task<bool> Del(string adresse)
         {
             logger.LogDebug($"Del({adresse})");
+            Adresse.Pruefen(adresse);
             var path = Path.Combine(pfad, adresse);
             if (File.Exists(path))
             {

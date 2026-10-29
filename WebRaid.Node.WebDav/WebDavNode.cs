@@ -72,6 +72,7 @@ namespace WebRaid.Node.WebDav
         public async Task<Stream> Get(string adresse)
         {
             logger.LogDebug($"Get({adresse})");
+            Adresse.Pruefen(adresse);
             var antwort = await Senden(HttpMethod.Get, adresse, null, HttpCompletionOption.ResponseHeadersRead)
                 .ConfigureAwait(false);
 
@@ -95,7 +96,8 @@ namespace WebRaid.Node.WebDav
         public async Task<bool> Write(string adresse, Stream input)
         {
             logger.LogDebug($"Write({adresse})");
-            if (string.IsNullOrWhiteSpace(adresse)) throw new ArgumentNullException(nameof(adresse));
+            Adresse.Pruefen(adresse);
+            if (input == null) throw new ArgumentNullException(nameof(input));
 
             if (!await OrdnerAnlegen(adresse).ConfigureAwait(false)) return false;
 
@@ -112,6 +114,7 @@ namespace WebRaid.Node.WebDav
         public async Task<bool> Del(string adresse)
         {
             logger.LogDebug($"Del({adresse})");
+            Adresse.Pruefen(adresse);
             using (var antwort = await Senden(HttpMethod.Delete, adresse, null).ConfigureAwait(false))
             {
                 if (antwort.IsSuccessStatusCode) return true;
