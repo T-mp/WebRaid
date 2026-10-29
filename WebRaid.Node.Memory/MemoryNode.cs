@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
@@ -25,6 +26,7 @@ namespace WebRaid.Node.Memory
         public async Task<Stream> Get(string adresse)
         {
             logger.LogDebug($"Get({adresse})");
+            Adresse.Pruefen(adresse);
             if (Speicher.ContainsKey(adresse))
             {
                 var stream = Speicher[adresse];
@@ -39,6 +41,8 @@ namespace WebRaid.Node.Memory
         public async Task<bool> Write(string adresse, Stream input)
         {
             logger.LogDebug($"Write({adresse})");
+            Adresse.Pruefen(adresse);
+            if (input == null) throw new ArgumentNullException(nameof(input));
             if (!Speicher.ContainsKey(adresse))
             {
                 logger.LogTrace($"Write:Stream wird angelegt");
@@ -55,6 +59,7 @@ namespace WebRaid.Node.Memory
         public Task<bool> Del(string adresse)
         {
             logger.LogDebug($"Del({adresse})");
+            Adresse.Pruefen(adresse);
             if (Speicher.ContainsKey(adresse))
             {
                 Speicher.Remove(adresse);

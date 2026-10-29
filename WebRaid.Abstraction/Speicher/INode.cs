@@ -21,6 +21,8 @@ namespace WebRaid.Abstraction.Speicher
         /// <para>Wenn vorhanden: Ein <see cref="Stream"/> zum lesen</para>
         /// <para>Wenn nicht vorhanden: <see langword="null" /></para>
         /// </returns>
+        /// <exception cref="System.ArgumentNullException">Wenn <paramref name="adresse"/> <see langword="null"/> ist</exception>
+        /// <exception cref="System.ArgumentOutOfRangeException">Wenn <paramref name="adresse"/> leer ist</exception>
         Task<Stream> Get(string adresse);
 
         /// <summary>
@@ -32,6 +34,8 @@ namespace WebRaid.Abstraction.Speicher
         /// <para>Wenn erfolgreich: <see langword="true"/></para>
         /// <para>Wenn nicht erfolgreich: <see langword="false" /></para>
         /// </returns>
+        /// <exception cref="System.ArgumentNullException">Wenn <paramref name="adresse"/> oder <paramref name="input"/> <see langword="null"/> ist</exception>
+        /// <exception cref="System.ArgumentOutOfRangeException">Wenn <paramref name="adresse"/> leer ist</exception>
         Task<bool> Write(string adresse, Stream input);
 
         /// <summary>
@@ -42,6 +46,8 @@ namespace WebRaid.Abstraction.Speicher
         /// <para>Wenn erfolgreich: <see langword="true"/></para>
         /// <para>Wenn nicht erfolgreich: <see langword="false" /></para>
         /// </returns>
+        /// <exception cref="System.ArgumentNullException">Wenn <paramref name="adresse"/> <see langword="null"/> ist</exception>
+        /// <exception cref="System.ArgumentOutOfRangeException">Wenn <paramref name="adresse"/> leer ist</exception>
         Task<bool> Del(string adresse);
     }
 }

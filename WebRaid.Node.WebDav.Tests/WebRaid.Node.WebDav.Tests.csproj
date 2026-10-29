@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Test.Extensions.Logging\Test.Extensions.Logging.csproj" />
+    <ProjectReference Include="..\WebRaid.Node.TestsBase\WebRaid.Node.TestsBase.csproj" />
     <ProjectReference Include="..\WebRaid.Node.WebDav\WebRaid.Node.WebDav.csproj" />
   </ItemGroup>
 
