@@ -22,6 +22,26 @@ So bin ich auf die Idee gekommen das Ganze Dateibasiert auf zu ziehen und als Sc
 - Wenn einige (nicht zu fiele) Cloud-Speicher nicht verfügbar sind merkt das Programm nix.
 - Cloud-Speicher können beliebig hinzugefügt werden und im Rahmen der genutzten Kapazitäten auch entfernt oder ausgetaucht werden. (Ohne nennenswerte Auswirkungen auf das verwendende Programm.)
 
+## Entwicklung
+Benötigt das [.NET 10 SDK](https://dotnet.microsoft.com/download).  
+`dotnet build` und `dotnet test` im Hauptordner. Die CI baut zusätzlich lauffähige Pakete für `win-x64`, `linux-x64` und `linux-arm64` (Raspberry Pi 4 mit 64-bit Raspberry Pi OS).
+
+### WebDAV-Knoten konfigurieren
+Ein WebDAV-Knoten deckt alle Anbieter mit WebDAV-Zugang ab (z.B. Web.de, GMX, Nextcloud). Beispiel:
+
+```json
+"WebDavNode": {
+  "Knoten": [
+    { "Name": "WebDe1", "Url": "https://webdav.smartdrive.web.de/webraid", "Benutzer": "...", "Passwort": "..." },
+    { "Name": "Nextcloud1", "Url": "https://cloud.example.org/remote.php/dav/files/thomas/webraid" }
+  ]
+}
+```
+
+- Nur `https://` ist erlaubt (Ausnahme: `localhost`, oder ausdrücklich `"UnsicheresHttpErlauben": "true"`).
+- Zugangsdaten nicht in `appsettings.json` einchecken, sondern z.B. per `dotnet user-secrets` oder Umgebungsvariablen (`WebDavNode__Knoten__0__Passwort`) setzen.
+- Ob der eigene Tarif WebDAV-Zugriff erlaubt, ist beim jeweiligen Anbieter zu prüfen.
+
 ## Rechtliches
 Die Idee hinter RAID ist, glaube ich, eigentlich schon alt genug, dass sie als Gemeingut in der IT durch geht.
 
