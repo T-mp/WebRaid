@@ -135,13 +135,51 @@ namespace WebRaid.Node.Raid.Tests
         }
 
         [Test]
-        public async Task Get_FalscherHauptschluessel_FindetDateiNicht()
+        public async Task Get_FalscherHauptschluessel_WirftInvalidDataException()
         {
             await UnterTest().Write("datei", new MemoryStream(Daten(100)));
             var andererSchluessel = Enumerable.Repeat((byte)7, 32).ToArray();
 
-            // Mit anderem Schlüssel ergibt sich eine andere Manifest-Adresse: die Datei ist schlicht nicht da
-            (await UnterTest(schluessel: andererSchluessel).Get("datei")).Should().BeNull();
+            // Ohne Prüfwert sähe das RAID mit falschem Schlüssel einfach leer aus
+            await UnterTest(schluessel: andererSchluessel).Invoking(r => r.Get("datei"))
+                .Should().ThrowAsync<InvalidDataException>().WithMessage("*passt nicht*");
+        }
+
+        [Test]
+        public async Task Write_FalscherHauptschluessel_WirftUndSchreibtNichts()
+        {
+            await UnterTest().Write("datei", new MemoryStream(Daten(100)));
+            var vorher = knoten.Select(k => k.Inhalt.Count).ToArray();
+
+            await UnterTest(schluessel: Enumerable.Repeat((byte)7, 32).ToArray()).Invoking(r => r.Write("andere", new MemoryStream(Daten(10))))
+                .Should().ThrowAsync<InvalidDataException>();
+
+            knoten.Select(k => k.Inhalt.Count).Should().Equal(vorher);
+        }
+
+        [Test]
+        public async Task Write_EinKnotenMitFremdemPruefwert_FunktioniertUndLaesstIhnStehen()
+        {
+            var unterTest = UnterTest();
+            await unterTest.Write("datei", new MemoryStream(Daten(100)));
+            knoten[0].Inhalt["k/pruefung"] = new byte[32];
+
+            var neu = UnterTest();
+            (await neu.Write("zweite", new MemoryStream(Daten(10)))).Should().BeTrue();
+
+            knoten[0].Inhalt["k/pruefung"].Should().Equal(new byte[32], "ein fremder Prüfwert gehört vielleicht einem anderen RAID");
+        }
+
+        [Test]
+        public async Task Write_KnotenOhnePruefwert_WirdErgaenzt()
+        {
+            await UnterTest().Write("datei", new MemoryStream(Daten(100)));
+            knoten[1].Inhalt.TryRemove("k/pruefung", out _);
+
+            await UnterTest().Write("zweite", new MemoryStream(Daten(10)));
+
+            knoten[1].Inhalt.Should().ContainKey("k/pruefung");
+            knoten[1].Inhalt["k/pruefung"].Should().Equal(knoten[0].Inhalt["k/pruefung"]);
         }
 
         [Test]
@@ -228,7 +266,7 @@ namespace WebRaid.Node.Raid.Tests
 
             (await unterTest.Del("datei")).Should().BeTrue();
 
-            foreach (var kn in knoten) kn.Inhalt.Keys.Should().OnlyContain(a => a == "s/sperre", "nur die Schreibsperre bleibt");
+            foreach (var kn in knoten) kn.Inhalt.Keys.Should().OnlyContain(a => a == "s/sperre" || a == "k/pruefung", "nur Schreibsperre und Schlüsselprüfwert bleiben");
             (await unterTest.Get("datei")).Should().BeNull();
         }
 

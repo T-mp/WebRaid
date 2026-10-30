@@ -69,6 +69,7 @@ namespace WebRaid.Node.Raid
         private const int TagLaenge = 16;
         private const int KopfLaenge = 3;
         private const string SperrAdresse = "s/sperre";
+        private const string PruefAdresse = "k/pruefung";
 
         private readonly IReadOnlyList<IRawNode> knoten;
         private readonly Dictionary<string, IRawNode> knotenNachName;
@@ -78,6 +79,8 @@ namespace WebRaid.Node.Raid
         private readonly byte[] manifestSchluessel;
         private readonly byte[] adressSchluessel;
         private readonly byte[] sperrSchluessel;
+        private readonly byte[] pruefWert;
+        private volatile bool schluesselBestaetigt;
         private readonly IReadOnlyList<IRawNode[]> gruppen;
         private readonly IVersionsRegister register;
         private readonly string instanz;
@@ -130,6 +133,7 @@ namespace WebRaid.Node.Raid
             manifestSchluessel = HKDF.DeriveKey(HashAlgorithmName.SHA256, haupt.ToArray(), 32, Array.Empty<byte>(), Encoding.UTF8.GetBytes("WebRaid/Manifest"));
             adressSchluessel = HKDF.DeriveKey(HashAlgorithmName.SHA256, haupt.ToArray(), 32, Array.Empty<byte>(), Encoding.UTF8.GetBytes("WebRaid/Adresse"));
             sperrSchluessel = HKDF.DeriveKey(HashAlgorithmName.SHA256, haupt.ToArray(), 32, Array.Empty<byte>(), Encoding.UTF8.GetBytes("WebRaid/Sperre"));
+            pruefWert = HKDF.DeriveKey(HashAlgorithmName.SHA256, haupt.ToArray(), 32, Array.Empty<byte>(), Encoding.UTF8.GetBytes("WebRaid/Pruefwert"));
 
             logger.LogDebug($"New RaidNode({Name}, k={datenCode.DatenBloecke}, m={datenCode.ParitaetsBloecke}, Knoten={string.Join(",", knotenNachName.Keys)}, Ausfallgruppen={gruppen.Count})");
         }
@@ -152,6 +156,7 @@ namespace WebRaid.Node.Raid
         {
             logger.LogDebug($"Get({adresse})");
             Adresse.Pruefen(adresse);
+            await SchluesselPruefen(false).ConfigureAwait(false);
 
             var manifest = await ManifestLaden(adresse).ConfigureAwait(false);
             if (manifest == null)
@@ -203,6 +208,7 @@ namespace WebRaid.Node.Raid
         /// <param name="datenBloecke">k für diese Datei</param>
         /// <param name="paritaetsBloecke">m für diese Datei = verkraftbare Ausfälle</param>
         /// <exception cref="IOException">Wenn eine andere Instanz das RAID gerade beschreibt</exception>
+        /// <exception cref="InvalidDataException">Wenn der Hauptschlüssel nicht zu diesem RAID passt</exception>
         public async Task<bool> Write(string adresse, Stream input, int datenBloecke, int paritaetsBloecke)
         {
             logger.LogDebug($"Write({adresse}, k={datenBloecke}, m={paritaetsBloecke})");
@@ -216,6 +222,7 @@ namespace WebRaid.Node.Raid
             await schreibSperre.WaitAsync().ConfigureAwait(false);
             try
             {
+                await SchluesselPruefen(true).ConfigureAwait(false);
                 await SperreSichern().ConfigureAwait(false);
                 return await Schreiben(adresse, input, code).ConfigureAwait(false);
             }
@@ -297,6 +304,7 @@ namespace WebRaid.Node.Raid
             await schreibSperre.WaitAsync().ConfigureAwait(false);
             try
             {
+                await SchluesselPruefen(false).ConfigureAwait(false);
                 var manifest = await ManifestLaden(adresse).ConfigureAwait(false);
                 if (manifest == null)
                 {
@@ -599,6 +607,39 @@ namespace WebRaid.Node.Raid
         /// Stellt sicher, dass nur diese Instanz das RAID beschreibt.
         /// Auf jedem Knoten liegt ein mit dem Hauptschlüssel signierter Eintrag „Instanz, gültig bis“.
         /// </summary>
+        /// <summary>
+        /// Stellt sicher, dass der Hauptschlüssel zu den Knoten passt. Ohne diese Prüfung sähe ein falscher Schlüssel
+        /// (z.B. der Wiederherstellungscode eines anderen RAIDs) einfach wie ein leeres RAID aus.
+        /// </summary>
+        /// <param name="schreibend">Fehlende Prüfwerte ergänzen (nur unter der Schreibsperre)</param>
+        private async Task SchluesselPruefen(bool schreibend)
+        {
+            if (schluesselBestaetigt) return;
+
+            var werte = await Task.WhenAll(knoten.Select(k => Lesen(k, PruefAdresse))).ConfigureAwait(false);
+            var passend = werte.Count(w => w != null && CryptographicOperations.FixedTimeEquals(w, pruefWert));
+            var fremd = werte.Count(w => w != null) - passend;
+            if (fremd > 0 && passend == 0)
+            {
+                throw new InvalidDataException($"Der Hauptschlüssel passt nicht zum RAID '{Name}'. Falscher Wiederherstellungscode oder Knoten eines anderen RAIDs?");
+            }
+            if (fremd > 0)
+            {
+                logger.LogWarning($"{fremd} Knoten von '{Name}' tragen einen fremden Prüfwert und gehören vielleicht zu einem anderen RAID");
+            }
+
+            if (!schreibend)
+            {
+                if (passend > 0) schluesselBestaetigt = true;
+                return;
+            }
+
+            // Nur fehlende Prüfwerte ergänzen; fremde könnten einem anderen RAID gehören
+            await Task.WhenAll(knoten.Where((_, i) => werte[i] == null)
+                .Select(k => Sicher(() => k.Write(PruefAdresse, new MemoryStream(pruefWert, false)), $"Write({PruefAdresse}) auf {k.Name}"))).ConfigureAwait(false);
+            schluesselBestaetigt = true;
+        }
+
         private async Task SperreSichern()
         {
             var jetzt = zeit.GetUtcNow();

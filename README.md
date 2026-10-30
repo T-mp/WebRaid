@@ -42,6 +42,26 @@ Ein WebDAV-Knoten deckt alle Anbieter mit WebDAV-Zugang ab (z.B. Web.de, GMX, Ne
 - Zugangsdaten nicht in `appsettings.json` einchecken, sondern z.B. per `dotnet user-secrets` oder Umgebungsvariablen (`WebDavNode__Knoten__0__Passwort`) setzen.
 - Ob der eigene Tarif WebDAV-Zugriff erlaubt, ist beim jeweiligen Anbieter zu prüfen.
 
+### RAID konfigurieren
+Der RAID-Knoten fasst die Knoten zusammen, verschlüsselt alles und verteilt es per Reed-Solomon. Beispiel:
+
+```json
+"RaidNode": {
+  "Name": "Thomas",
+  "Knoten": [ "WebDe1", "Gmx1", "Nextcloud1" ],
+  "DatenBloecke": 2,
+  "ParitaetsBloecke": 1,
+  "Ausfallgruppen": { "WebDe1": "UnitedInternet", "Gmx1": "UnitedInternet" }
+}
+```
+
+- `Knoten` leer oder weggelassen: alle konfigurierten Knoten.
+- `Ausfallgruppen`: Knoten, die gemeinsam ausfallen können (gleicher Anbieter), zählen als einer. k + m darf die Zahl der Gruppen nicht übersteigen.
+- Schlüsseldatei und Versionsregister liegen in `Datenordner`, Standard ist `%LOCALAPPDATA%\WebRaid\<Name>` bzw. `~/.local/share/WebRaid/<Name>`.
+- `Schutz`: unter Windows standardmäßig `dpapi` (die Schlüsseldatei öffnet sich nur unter demselben Windows-Konto, der Dienst startet ohne Eingabe). Sonst `passphrase` (Argon2id); die Passphrase kommt aus `PassphraseDatei` (z.B. `%CREDENTIALS_DIRECTORY%/webraid` bei systemd) oder der Umgebungsvariable `WEBRAID_PASSPHRASE`.
+- Die Schlüsseldatei wird nie automatisch angelegt. Beim Anlegen entsteht ein **Wiederherstellungscode** (14 Gruppen à 4 Zeichen). Ihn ausdrucken und sicher aufbewahren: ohne Schlüsseldatei und ohne Code sind die Daten verloren.
+- Ein falscher Schlüssel (z.B. der Code eines anderen RAIDs) wird anhand eines Prüfwerts auf den Knoten erkannt und abgewiesen.
+
 ## Rechtliches
 Die Idee hinter RAID ist, glaube ich, eigentlich schon alt genug, dass sie als Gemeingut in der IT durch geht.
 
