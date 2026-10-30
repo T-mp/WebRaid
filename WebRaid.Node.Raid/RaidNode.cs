@@ -6,6 +6,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using WebRaid.Abstraction.Speicher;
@@ -25,6 +26,28 @@ namespace WebRaid.Node.Raid
 
         /// <summary>Größe der Klartext-Segmente in Byte</summary>
         public int SegmentGroesse { get; set; } = 1024 * 1024;
+
+        /// <summary>
+        /// Knotenname → Ausfallgruppe. Knoten einer Gruppe können gemeinsam ausfallen (z.B. Web.de und GMX, beide United Internet).
+        /// Je Segment liegt höchstens ein Block in einer Gruppe, „m Ausfälle“ zählt also Gruppen.
+        /// Knoten ohne Eintrag bilden je eine eigene Gruppe.
+        /// </summary>
+        public Dictionary<string, string> Ausfallgruppen { get; set; } = new Dictionary<string, string>();
+
+        /// <summary>Lokales Register gegen Rollback; ohne Angabe nur im Arbeitsspeicher</summary>
+        public IVersionsRegister Versionsregister { get; set; }
+
+        /// <summary>
+        /// Kennung dieser Installation für die Schreibsperre. Bleibt über Neustarts gleich,
+        /// damit ein neu gestarteter Dienst nicht von seiner eigenen alten Sperre ausgesperrt wird.
+        /// </summary>
+        public string Instanz { get; set; } = $"{Environment.MachineName}/{Environment.UserName}";
+
+        /// <summary>So lange gilt die Schreibsperre ohne Erneuerung</summary>
+        public TimeSpan SperrDauer { get; set; } = TimeSpan.FromMinutes(10);
+
+        /// <summary>Uhr, austauschbar für Tests</summary>
+        public TimeProvider Zeit { get; set; } = TimeProvider.System;
     }
 
     /// <summary>
@@ -45,6 +68,7 @@ namespace WebRaid.Node.Raid
         private const int NonceLaenge = 12;
         private const int TagLaenge = 16;
         private const int KopfLaenge = 3;
+        private const string SperrAdresse = "s/sperre";
 
         private readonly IReadOnlyList<IRawNode> knoten;
         private readonly Dictionary<string, IRawNode> knotenNachName;
@@ -53,6 +77,14 @@ namespace WebRaid.Node.Raid
         private readonly int segmentGroesse;
         private readonly byte[] manifestSchluessel;
         private readonly byte[] adressSchluessel;
+        private readonly byte[] sperrSchluessel;
+        private readonly IReadOnlyList<IRawNode[]> gruppen;
+        private readonly IVersionsRegister register;
+        private readonly string instanz;
+        private readonly TimeSpan sperrDauer;
+        private readonly TimeProvider zeit;
+        private readonly SemaphoreSlim schreibSperre = new SemaphoreSlim(1, 1);
+        private DateTimeOffset sperreErneuernAb = DateTimeOffset.MinValue;
         private readonly ILogger<RaidNode> logger;
 
         /// <summary>
@@ -75,11 +107,18 @@ namespace WebRaid.Node.Raid
             if (this.knoten.Count > 255) throw new ArgumentException("Höchstens 255 Knoten", nameof(knoten));
             if (this.knoten.Select(k => k.Name).Distinct().Count() != this.knoten.Count) throw new ArgumentException("Die Knoten brauchen eindeutige Namen", nameof(knoten));
             if (optionen.SegmentGroesse < 1) throw new ArgumentOutOfRangeException(nameof(optionen), "SegmentGroesse muss positiv sein");
-            if (optionen.DatenBloecke + optionen.ParitaetsBloecke > this.knoten.Count)
-            {
-                throw new ArgumentException($"k + m = {optionen.DatenBloecke + optionen.ParitaetsBloecke} Blöcke brauchen mindestens so viele Knoten, vorhanden: {this.knoten.Count}", nameof(knoten));
-            }
             knotenNachName = this.knoten.ToDictionary(k => k.Name);
+            var zuordnung = optionen.Ausfallgruppen ?? new Dictionary<string, string>();
+            gruppen = this.knoten
+                .GroupBy(k => zuordnung.TryGetValue(k.Name, out var gruppe) ? "g:" + gruppe : "k:" + k.Name)
+                .Select(g => g.ToArray())
+                .ToList();
+            PruefeRedundanz(optionen.DatenBloecke, optionen.ParitaetsBloecke, nameof(knoten));
+
+            register = optionen.Versionsregister ?? new SpeicherVersionsregister();
+            instanz = optionen.Instanz ?? throw new ArgumentNullException(nameof(optionen), "Instanz fehlt");
+            sperrDauer = optionen.SperrDauer;
+            zeit = optionen.Zeit ?? TimeProvider.System;
 
             datenCode = new ReedSolomon(optionen.DatenBloecke, optionen.ParitaetsBloecke);
             var metaDaten = Math.Min(2, this.knoten.Count);
@@ -90,8 +129,17 @@ namespace WebRaid.Node.Raid
             if (haupt.Length != 32) throw new ArgumentException("Der Hauptschlüssel muss 32 Byte lang sein", nameof(schluessel));
             manifestSchluessel = HKDF.DeriveKey(HashAlgorithmName.SHA256, haupt.ToArray(), 32, Array.Empty<byte>(), Encoding.UTF8.GetBytes("WebRaid/Manifest"));
             adressSchluessel = HKDF.DeriveKey(HashAlgorithmName.SHA256, haupt.ToArray(), 32, Array.Empty<byte>(), Encoding.UTF8.GetBytes("WebRaid/Adresse"));
+            sperrSchluessel = HKDF.DeriveKey(HashAlgorithmName.SHA256, haupt.ToArray(), 32, Array.Empty<byte>(), Encoding.UTF8.GetBytes("WebRaid/Sperre"));
 
-            logger.LogDebug($"New RaidNode({Name}, k={datenCode.DatenBloecke}, m={datenCode.ParitaetsBloecke}, Knoten={string.Join(",", knotenNachName.Keys)})");
+            logger.LogDebug($"New RaidNode({Name}, k={datenCode.DatenBloecke}, m={datenCode.ParitaetsBloecke}, Knoten={string.Join(",", knotenNachName.Keys)}, Ausfallgruppen={gruppen.Count})");
+        }
+
+        private void PruefeRedundanz(int datenBloecke, int paritaetsBloecke, string parameter)
+        {
+            if (datenBloecke + paritaetsBloecke > gruppen.Count)
+            {
+                throw new ArgumentException($"k + m = {datenBloecke + paritaetsBloecke} Blöcke brauchen mindestens so viele Knoten in verschiedenen Ausfallgruppen, vorhanden: {gruppen.Count}", parameter);
+            }
         }
 
         /// <inheritdoc />
@@ -144,28 +192,58 @@ namespace WebRaid.Node.Raid
         /// <para><see langword="true"/>, wenn jedes Segment auf mindestens k Knoten und das Manifest auf mindestens zwei Knoten liegt</para>
         /// <para>Sonst <see langword="false"/>; eine vorherige Version bleibt dann erhalten</para>
         /// </returns>
-        public async Task<bool> Write(string adresse, Stream input)
+        public Task<bool> Write(string adresse, Stream input) =>
+            Write(adresse, input, datenCode.DatenBloecke, datenCode.ParitaetsBloecke);
+
+        /// <summary>
+        /// Schreibt mit eigener Redundanz, z.B. je Ordner unterschiedlich
+        /// </summary>
+        /// <param name="adresse">Adresse / Pfad im weiteren Sinn</param>
+        /// <param name="input"><see cref="Stream"/> der ab der aktuellen Position bis zum Ende geschrieben werden soll</param>
+        /// <param name="datenBloecke">k für diese Datei</param>
+        /// <param name="paritaetsBloecke">m für diese Datei = verkraftbare Ausfälle</param>
+        /// <exception cref="IOException">Wenn eine andere Instanz das RAID gerade beschreibt</exception>
+        public async Task<bool> Write(string adresse, Stream input, int datenBloecke, int paritaetsBloecke)
         {
-            logger.LogDebug($"Write({adresse})");
+            logger.LogDebug($"Write({adresse}, k={datenBloecke}, m={paritaetsBloecke})");
             Adresse.Pruefen(adresse);
             if (input == null) throw new ArgumentNullException(nameof(input));
+            var code = datenBloecke == datenCode.DatenBloecke && paritaetsBloecke == datenCode.ParitaetsBloecke
+                ? datenCode
+                : new ReedSolomon(datenBloecke, paritaetsBloecke);
+            PruefeRedundanz(datenBloecke, paritaetsBloecke, nameof(paritaetsBloecke));
 
+            await schreibSperre.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                await SperreSichern().ConfigureAwait(false);
+                return await Schreiben(adresse, input, code).ConfigureAwait(false);
+            }
+            finally
+            {
+                schreibSperre.Release();
+            }
+        }
+
+        private async Task<bool> Schreiben(string adresse, Stream input, ReedSolomon code)
+        {
             Manifest alt;
             try
             {
                 alt = await ManifestLaden(adresse).ConfigureAwait(false);
             }
-            catch (InvalidDataException e)
+            catch (Exception e) when (e is InvalidDataException || e is IOException)
             {
                 logger.LogWarning(e, $"Write({adresse}): Vorherige Version nicht lesbar, sie wird ersetzt");
                 alt = null;
             }
 
+            var bekannt = register.Lesen(ManifestAdresse(adresse));
             var manifest = new Manifest
             {
-                Version = (alt?.Version ?? 0) + 1,
-                DatenBloecke = datenCode.DatenBloecke,
-                ParitaetsBloecke = datenCode.ParitaetsBloecke,
+                Version = Math.Max(alt?.Version ?? 0, bekannt?.Version ?? 0) + 1,
+                DatenBloecke = code.DatenBloecke,
+                ParitaetsBloecke = code.ParitaetsBloecke,
                 Schluessel = RandomNumberGenerator.GetBytes(32),
                 Kennung = RandomNumberGenerator.GetBytes(16)
             };
@@ -179,20 +257,20 @@ namespace WebRaid.Node.Raid
                     var chiffrat = new byte[gelesen + TagLaenge];
                     aead.Encrypt(SegmentNonce(s), puffer.AsSpan(0, gelesen), chiffrat.AsSpan(0, gelesen), chiffrat.AsSpan(gelesen), SegmentDaten(manifest.Kennung, s));
 
-                    var segment = await SegmentSchreiben(manifest.Kennung, s, chiffrat).ConfigureAwait(false);
+                    var segment = await SegmentSchreiben(manifest.Kennung, s, chiffrat, code).ConfigureAwait(false);
                     manifest.Segmente.Add(segment);
                     manifest.Laenge += gelesen;
 
                     var geschrieben = segment.Bloecke.Count(b => b != null);
-                    if (geschrieben < datenCode.DatenBloecke)
+                    if (geschrieben < code.DatenBloecke)
                     {
-                        logger.LogWarning($"Write({adresse}): Segment {s} nur auf {geschrieben} von mindestens {datenCode.DatenBloecke} Knoten geschrieben");
+                        logger.LogWarning($"Write({adresse}): Segment {s} nur auf {geschrieben} von mindestens {code.DatenBloecke} Knoten geschrieben");
                         await BloeckeLoeschen(manifest).ConfigureAwait(false);
                         return false;
                     }
-                    if (geschrieben < datenCode.Bloecke)
+                    if (geschrieben < code.Bloecke)
                     {
-                        logger.LogWarning($"Write({adresse}): Segment {s} nur auf {geschrieben} von {datenCode.Bloecke} Knoten, Redundanz eingeschränkt");
+                        logger.LogWarning($"Write({adresse}): Segment {s} nur auf {geschrieben} von {code.Bloecke} Knoten, Redundanz eingeschränkt");
                     }
 
                     gelesen = await Fuellen(input, puffer).ConfigureAwait(false);
@@ -205,6 +283,7 @@ namespace WebRaid.Node.Raid
                 return false;
             }
 
+            register.Merken(ManifestAdresse(adresse), new VersionsStand(manifest.Version, false));
             if (alt != null) await BloeckeLoeschen(alt).ConfigureAwait(false);
             return true;
         }
@@ -215,29 +294,62 @@ namespace WebRaid.Node.Raid
             logger.LogDebug($"Del({adresse})");
             Adresse.Pruefen(adresse);
 
-            var manifest = await ManifestLaden(adresse).ConfigureAwait(false);
-            if (manifest == null)
+            await schreibSperre.WaitAsync().ConfigureAwait(false);
+            try
             {
-                logger.LogWarning($"'{adresse}' nicht gefunden!");
-                return false;
-            }
+                var manifest = await ManifestLaden(adresse).ConfigureAwait(false);
+                if (manifest == null)
+                {
+                    logger.LogWarning($"'{adresse}' nicht gefunden!");
+                    return false;
+                }
 
-            await BloeckeLoeschen(manifest).ConfigureAwait(false);
-            var manifestAdresse = ManifestAdresse(adresse);
-            await Task.WhenAll(knoten.Select(k => Sicher(() => k.Del(manifestAdresse), $"Del({manifestAdresse}) auf {k.Name}"))).ConfigureAwait(false);
-            return true;
+                await SperreSichern().ConfigureAwait(false);
+                var manifestAdresse = ManifestAdresse(adresse);
+                register.Merken(manifestAdresse, new VersionsStand(manifest.Version, true));
+                await BloeckeLoeschen(manifest).ConfigureAwait(false);
+                await Task.WhenAll(knoten.Select(k => Sicher(() => k.Del(manifestAdresse), $"Del({manifestAdresse}) auf {k.Name}"))).ConfigureAwait(false);
+                return true;
+            }
+            finally
+            {
+                schreibSperre.Release();
+            }
+        }
+
+        /// <summary>
+        /// Gibt die Schreibsperre frei, damit eine andere Instanz sofort schreiben kann
+        /// </summary>
+        public async Task SperreFreigeben()
+        {
+            await schreibSperre.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                var daten = SperreKodieren(zeit.GetUtcNow());
+                await Task.WhenAll(knoten.Select(k => Sicher(() => k.Write(SperrAdresse, new MemoryStream(daten, false)), $"Write({SperrAdresse}) auf {k.Name}"))).ConfigureAwait(false);
+                sperreErneuernAb = DateTimeOffset.MinValue;
+            }
+            finally
+            {
+                schreibSperre.Release();
+            }
         }
 
         #region Segmente
 
-        private IRawNode KnotenFuer(int segment, int block) => knoten[(block + segment) % knoten.Count];
-
-        private async Task<Segment> SegmentSchreiben(byte[] kennung, int s, byte[] chiffrat)
+        /// <summary>Je Segment liegen alle Blöcke in verschiedenen Ausfallgruppen; die Gruppen rotieren über die Segmente</summary>
+        private IRawNode KnotenFuer(int segment, int block)
         {
-            var bloecke = Zerlegen(chiffrat, datenCode);
-            datenCode.Kodieren(bloecke);
+            var gruppe = gruppen[(block + segment) % gruppen.Count];
+            return gruppe[segment % gruppe.Length];
+        }
 
-            var ergebnisse = await Task.WhenAll(Enumerable.Range(0, datenCode.Bloecke).Select(async j =>
+        private async Task<Segment> SegmentSchreiben(byte[] kennung, int s, byte[] chiffrat, ReedSolomon code)
+        {
+            var bloecke = Zerlegen(chiffrat, code);
+            code.Kodieren(bloecke);
+
+            var ergebnisse = await Task.WhenAll(Enumerable.Range(0, code.Bloecke).Select(async j =>
             {
                 var ziel = KnotenFuer(s, j);
                 var ok = await Sicher(() => ziel.Write(BlockAdresse(kennung, s, j), new MemoryStream(bloecke[j], false)),
@@ -379,10 +491,18 @@ namespace WebRaid.Node.Raid
         private async Task<Manifest> ManifestLaden(string adresse)
         {
             var manifestAdresse = ManifestAdresse(adresse);
+            var bekannt = register.Lesen(manifestAdresse);
             var teile = (await Task.WhenAll(knoten.Select(k => Lesen(k, manifestAdresse))).ConfigureAwait(false))
                 .Where(t => t != null && t.Length > KopfLaenge && t[1] >= 1 && t[2] >= t[1] && t[0] < t[2])
                 .ToList();
-            if (teile.Count == 0) return null;
+            if (teile.Count == 0)
+            {
+                if (bekannt != null && !bekannt.Geloescht)
+                {
+                    throw new IOException($"'{adresse}' (Version {bekannt.Version}) ist auf keinem Knoten mehr zu finden");
+                }
+                return null;
+            }
 
             Manifest neuestes = null;
             foreach (var auswahl in Auswahlen(teile))
@@ -395,6 +515,20 @@ namespace WebRaid.Node.Raid
             {
                 throw new InvalidDataException($"Die Metadaten zu '{adresse}' lassen sich nicht lesen (falscher Schlüssel oder beschädigt)");
             }
+
+            if (bekannt != null)
+            {
+                if (bekannt.Geloescht && neuestes.Version <= bekannt.Version)
+                {
+                    logger.LogWarning($"'{adresse}' wurde gelöscht, ein Knoten liefert noch Version {neuestes.Version}");
+                    return null;
+                }
+                if (neuestes.Version < bekannt.Version)
+                {
+                    throw new InvalidDataException($"'{adresse}': Knoten liefern Version {neuestes.Version}, bekannt ist {bekannt.Version} (Rollback?)");
+                }
+            }
+            register.Merken(manifestAdresse, new VersionsStand(neuestes.Version, false));
             return neuestes;
         }
 
@@ -452,6 +586,59 @@ namespace WebRaid.Node.Raid
                 return JsonSerializer.Deserialize<Manifest>(json);
             }
             catch (CryptographicException)
+            {
+                return null;
+            }
+        }
+
+        #endregion
+
+        #region Schreibsperre
+
+        /// <summary>
+        /// Stellt sicher, dass nur diese Instanz das RAID beschreibt.
+        /// Auf jedem Knoten liegt ein mit dem Hauptschlüssel signierter Eintrag „Instanz, gültig bis“.
+        /// </summary>
+        private async Task SperreSichern()
+        {
+            var jetzt = zeit.GetUtcNow();
+            if (jetzt < sperreErneuernAb) return;
+
+            var eintraege = await Task.WhenAll(knoten.Select(k => Lesen(k, SperrAdresse))).ConfigureAwait(false);
+            var fremd = eintraege.Select(SperreDekodieren).FirstOrDefault(e => e != null && e.Instanz != instanz && e.Bis > jetzt);
+            if (fremd != null)
+            {
+                throw new IOException($"Das RAID '{Name}' wird bis {fremd.Bis:u} von einer anderen Instanz beschrieben");
+            }
+
+            var daten = SperreKodieren(jetzt + sperrDauer);
+            var gesetzt = (await Task.WhenAll(knoten.Select(k => Sicher(() => k.Write(SperrAdresse, new MemoryStream(daten, false)), $"Write({SperrAdresse}) auf {k.Name}"))).ConfigureAwait(false))
+                .Count(ok => ok);
+            if (gesetzt < metaCode.DatenBloecke)
+            {
+                throw new IOException($"Die Schreibsperre für '{Name}' ließ sich nur auf {gesetzt} Knoten setzen");
+            }
+            sperreErneuernAb = jetzt + sperrDauer / 2;
+        }
+
+        private sealed record SperrEintrag(string Instanz, DateTimeOffset Bis);
+
+        private byte[] SperreKodieren(DateTimeOffset bis)
+        {
+            var json = JsonSerializer.SerializeToUtf8Bytes(new SperrEintrag(instanz, bis));
+            return HMACSHA256.HashData(sperrSchluessel, json).Concat(json).ToArray();
+        }
+
+        private SperrEintrag SperreDekodieren(byte[] daten)
+        {
+            if (daten == null || daten.Length <= 32) return null;
+            var json = daten.AsSpan(32);
+            if (!CryptographicOperations.FixedTimeEquals(daten.AsSpan(0, 32), HMACSHA256.HashData(sperrSchluessel, json))) return null;
+            try
+            {
+                return JsonSerializer.Deserialize<SperrEintrag>(json);
+            }
+            catch (JsonException)
             {
                 return null;
             }

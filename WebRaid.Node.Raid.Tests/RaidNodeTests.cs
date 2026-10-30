@@ -228,7 +228,7 @@ namespace WebRaid.Node.Raid.Tests
 
             (await unterTest.Del("datei")).Should().BeTrue();
 
-            foreach (var kn in knoten) kn.Inhalt.Should().BeEmpty();
+            foreach (var kn in knoten) kn.Inhalt.Keys.Should().OnlyContain(a => a == "s/sperre", "nur die Schreibsperre bleibt");
             (await unterTest.Get("datei")).Should().BeNull();
         }
 
